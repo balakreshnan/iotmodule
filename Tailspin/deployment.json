@@ -1,0 +1,122 @@
+{
+    "modulesContent": {
+      "$edgeAgent": {
+        "properties.desired": {
+          "schemaVersion": "1.0",
+          "runtime": {
+            "type": "docker",
+            "settings": {
+              "minDockerVersion": "v1.25",
+              "loggingOptions": "",
+              "registryCredentials": {}
+            }
+          },
+          "systemModules": {
+            "edgeAgent": {
+              "type": "docker",
+              "settings": {
+                "image": "mcr.microsoft.com/azureiotedge-agent:1.0",
+                "createOptions": "{}"
+              }
+            },
+            "edgeHub": {
+              "type": "docker",
+              "status": "running",
+              "restartPolicy": "always",
+              "settings": {
+                "image": "mcr.microsoft.com/azureiotedge-hub:1.0",
+                "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"443/tcp\":[{\"HostPort\":\"443\"}],\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"9600/tcp\": [{\"HostPort\": \"9600\"}]}}}"
+              }
+            }
+          },
+          "modules": {
+            "SimulatedTemperatureSensor": {
+              "version": "1.0",
+              "type": "docker",
+              "status": "running",
+              "restartPolicy": "always",
+              "settings": {
+                "image": "mcr.microsoft.com/azureiotedge-simulated-temperature-sensor:1.0",
+                "createOptions": "{}"
+              }
+            },
+            "metricscollector": {
+                "version": "1.0",
+                "type": "docker",
+                "status": "running",
+                "restartPolicy": "always",
+                "settings": {
+                  "image": "veyalla/metricscollector:0.0.5-amd64",
+                  "createOptions": "{}"
+                },
+                "env": {
+                  "AzMonWorkspaceId": {
+                    "value": "195cb184-3561-4bf9-be17-c2ee0ecb7fbc"
+                  },
+                  "AzMonWorkspaceKey": {
+                    "value": "WV73DOOqFUpak24DphIXY6G8E6iFuDnDtXyR0nkMqy1vILGyzpStdzNZssJqkEyxH2Gl+UFNb5V6XGPLKLfCLQ=="
+                  }
+                }
+            },
+            "logspout": {
+                "version": "1.0",
+                "type": "docker",
+                "status": "running",
+                "restartPolicy": "always",
+                "settings": {
+                  "image": "veyalla/logspout-loganalytics:linux-amd64",
+                  "createOptions": "{\"HostConfig\": {\"Binds\": [\"/var/run/docker.sock:/var/run/docker.sock\"]}}"
+                },
+                "env": {
+                    "BACKLOG" : {
+                        "value" : "false"
+                    },
+                    "LOGSPOUT" : {
+                        "value" : "ignore"
+                    },
+                    "LOGANALYTICS_WORKSPACE_ID": {
+                      "value": "195cb184-3561-4bf9-be17-c2ee0ecb7fbc"
+                    },
+                    "LOGANALYTICS_WORKSPACE_SECRET": {
+                      "value": "WV73DOOqFUpak24DphIXY6G8E6iFuDnDtXyR0nkMqy1vILGyzpStdzNZssJqkEyxH2Gl+UFNb5V6XGPLKLfCLQ=="
+                    }
+                },
+                "cmd" : {
+                   "value" : "loganalytics://"
+                }
+            }
+          }
+        }
+      },
+      "$edgeHub": {
+        "properties.desired": {
+          "schemaVersion": "1.0",
+          "routes": {
+            "SimulatedTemperatureSensorToHub": "FROM /messages/modules/SimulatedTemperatureSensor/outputs/* INTO $upstream",
+            "MetricsCollectorToHub": "FROM /messages/modules/metricscollector/* INTO $upstream",
+            "LogspoutToHub": "FROM /messages/modules/logspout/* INTO $upstream"
+          },
+          "storeAndForwardConfiguration": {
+            "timeToLiveSecs": 7200
+          }
+        }
+      },
+      "SimulatedTemperatureSensor": {
+        "properties.desired": {}
+      },
+      "metricscollector": {
+        "properties.desired": {
+          "schemaVersion": "1.0",
+          "scrapeFrequencySecs": 10,
+          "metricsFormat": "Json",
+          "syncTarget": "AzureLogAnalytics",
+          "endpoints": {
+              "edgeHub": "http://edgeHub:9600/metrics"
+          }
+        }
+      },
+      "logspout": {
+        "properties.desired": {}
+      }
+    }
+  }
