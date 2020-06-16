@@ -9,7 +9,13 @@
           "settings": {
             "minDockerVersion": "v1.25",
             "loggingOptions": "",
-            "registryCredentials": {}
+            "registryCredentials": {
+              "team12acr": {
+                "username": "$CONTAINER_REGISTRY_USERNAME",
+                "password": "$CONTAINER_REGISTRY_PASSWORD",
+                "address": "$CONTAINER_REGISTRY_LOGIN_SERVER"
+              }
+            }
           }
         },
         "systemModules": {
@@ -57,17 +63,7 @@
             "status": "running",
             "restartPolicy": "always",
             "settings": {
-              "image": "${MODULES.tailspintelemetry}",
-              "createOptions": {}
-            }
-          },
-          "SimulatedTemperatureSensor": {
-            "version": "1.0",
-            "type": "docker",
-            "status": "running",
-            "restartPolicy": "always",
-            "settings": {
-              "image": "mcr.microsoft.com/azureiotedge-simulated-temperature-sensor:1.0",
+              "image": "$CONTAINER_REGISTRY_LOGIN_SERVER/$TEMP_SIM_IMAGE_NAME:$TEMP_SIM_IMAGE_TAG",
               "createOptions": {}
             }
           }
@@ -78,13 +74,17 @@
       "properties.desired": {
         "schemaVersion": "1.0",
         "routes": {
-          "tailspintelemetryToIoTHub": "FROM /messages/modules/tailspintelemetry/outputs/* INTO $upstream",
-          "sensorTotailspintelemetry": "FROM /messages/modules/SimulatedTemperatureSensor/outputs/temperatureOutput INTO BrokeredEndpoint(\"/modules/tailspintelemetry/inputs/input1\")"
+          "tailspintelemetryToIoTHub": "FROM /messages/modules/tailspintelemetry/outputs/* INTO $upstream"
         },
         "storeAndForwardConfiguration": {
           "timeToLiveSecs": 7200
         }
       }
-    }
+    },
+    "tailspintelemetry": {
+      "properties.desired":{
+          "TemperatureThreshold":25
+      }
+  }
   }
 }
